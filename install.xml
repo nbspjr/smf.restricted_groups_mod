@@ -430,6 +430,7 @@ function restricted_groups() {
 
 <add><![CDATA[
 	// Who can see only own topics in this board
+	if (isset($boardOptions['restricted_groups']))
 	{
 		$boardUpdates[] = 'restricted_groups = {string:restricted_groups}';
 		$boardUpdateParameters['restricted_groups'] = implode(',', $boardOptions['restricted_groups']);
