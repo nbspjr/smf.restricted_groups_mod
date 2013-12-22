@@ -400,25 +400,29 @@ function restricted_groups() {
 		</operation>
 		<operation>
 
-			<search position="before"><![CDATA[$row_board['short_subject'] = shorten_subject($row_board['subject'], 24);]]></search>
+			<search position="after"><![CDATA[// This is a parent board.]]></search>
 
 <add><![CDATA[
 		$row_board['restricted_groups'] = $row_board['restricted_groups'] == '' ? array() : explode(',', $row_board['restricted_groups']);
+
+		if (is_user_restricted($row_board['restricted_groups'])) {
+			$row_board['num_topics'] = 0;
+			$row_board['num_posts'] = 0;
+		}
+
 ]]></add>
 
 		</operation>
 		<operation>
 
-			<search position="after"><![CDATA[// Provide the href and link.]]></search>
+			<search position="after"><![CDATA[$this_last_post = array(]]></search>
 
 <add><![CDATA[
-		if (is_user_restricted($row_board['restricted_groups']) && $row_board['id_member'] != $user_info['id']) {
-			$this_last_post['member']['username'] = $txt['not_applicable'];
-			$this_last_post['member']['href'] = '';
-			$row_board['subject'] = '';
-			$this_last_post['member']['link'] = $txt['not_applicable'];
-		}
-]]></add>
+		// Don't show the last post if the user is restricted to this board and the last post wasn't left by him
+		if (is_user_restricted($row_board['restricted_groups']) && $row_board['id_member'] != $user_info['id'])
+			$this_last_post = array();
+		else
+			]]></add>
 
 		</operation>
 	</file>
