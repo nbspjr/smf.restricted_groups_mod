@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<!DOCTYPE modification SYSTEM "http://www.simplemachines.org/xml/modification">
+<modification xmlns="http://www.simplemachines.org/xml/modification" xmlns:smf="http://www.simplemachines.org/">
+	<id>SergeyDanilishin:RestrictedGroupsMod</id>
+	<version>0.0.9</version>
+	
+	<file name="$themedir/languages/ManageBoards.russian-utf8.php" error="skip">
+		<operation>
+
+			<search position="end"></search>
+
+			<add><![CDATA[
+// Restricted Groups Mod
+$txt['mboards_restricted_groups'] = 'Группы с ограниченным доступом';
+$txt['mboards_restricted_groups_desc'] = 'Группы, у которых есть доступ только к своим темам в этом разделе.<br /><em>Выбранные в этом списке группы <strong>не получают</strong> права на просмотр раздела автоматически. Необходимо также добавить их в список разрешенных групп (<strong>Группы Пользователей</strong>).</em><br />';
+			]]></add>
+
+		</operation>
+	</file>
+</modification>

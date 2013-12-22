@@ -1,0 +1,519 @@
+<?xml version="1.0"?>
+<!DOCTYPE modification SYSTEM "http://www.simplemachines.org/xml/modification">
+<modification xmlns="http://www.simplemachines.org/xml/modification" xmlns:smf="http://www.simplemachines.org/">
+	<id>SergeyDanilishin:RestrictedGroupsMod</id>
+	<version>0.0.9</version>
+	
+	<file name="$sourcedir/Display.php">
+		<operation>
+
+			<search position="after"><![CDATA[$context['oldTopicError'] = !empty($modSettings['oldTopicDays']) && $lastPostTime + $modSettings['oldTopicDays'] * 86400 < time() && empty($sticky);]]></search>
+
+<add><![CDATA[
+	if ( is_user_restricted() && $topicinfo['id_member_started'] != $user_info['id'])
+		fatal_lang_error('topic_gone', false);
+]]></add>
+
+		</operation>
+	</file>
+
+	<file name="$sourcedir/Load.php">
+		<operation>
+
+			<search position="before"><![CDATA[if (empty($temp))
+	{
+		$request = $smcFunc['db_query']('', '
+			SELECT
+				c.id_cat, b.name AS bname, b.description, b.num_topics, b.member_groups,]]></search>
+
+<add><![CDATA[
+				b.restricted_groups,
+]]></add>
+
+		</operation>
+		<operation>
+
+			<search position="before"><![CDATA[// Load the membergroups allowed, and check permissions.
+			$board_info['groups'] = $row['member_groups'] == '' ? array() : explode(',', $row['member_groups']);]]></search>
+
+<add><![CDATA[
+			// Load the restricted membergroups allowed
+			$board_info['restricted_groups'] = $row['restricted_groups'] == '' ? array() : explode(',', $row['restricted_groups']);
+]]></add>
+
+		</operation>
+		<operation>
+
+			<search position="end"></search>
+
+<add><![CDATA[
+/* Restricted Groups Mod */
+function is_user_restricted($rgroups = null)
+{
+	global $board_info, $user_info;
+
+	$rgroups = !empty($rgroups) ? $rgroups : $board_info['restricted_groups'];
+
+	// Check whether restricted_groups value is actually set
+	if ( empty($rgroups) || !is_array($rgroups) )
+		return false;
+
+	// Forgive me, Your Magesty Administrator, who cares which groups you are in
+	if ( $user_info['id'] == 1 )
+		return false;
+
+	// Gotcha!
+	if ( array_intersect($user_info['groups'], $rgroups) )
+		return true;
+
+
+	return false;
+}
+
+function restricted_where() {
+	return '( (' . restricted_groups() . ') OR m.id_member = ' . (int)$user_info['id'] . ' )';
+}
+
+function restricted_groups() {
+	global $user_info;
+	$restricted_where = array();
+
+	foreach ($user_info['groups'] as $gid) {
+		$restricted_where[] = 'FIND_IN_SET(' . (int)$gid . ', b.restricted_groups) = 0';
+	}
+
+	return implode(' AND ', $restricted_where);
+}
+
+/* End of Restricted Groups Mod */
+]]></add>
+
+		</operation>
+	</file>
+
+	<file name="$sourcedir/ManageBoards.php">
+		<operation>
+
+			<search position="before"><![CDATA[// Some things that need to be setup for a new board.
+		$curBoard = array(
+			'member_groups' => array(0, -1),]]></search>
+
+<add><![CDATA[
+			'restricted_groups' => array(),
+]]></add>
+
+		</operation>
+		<operation>
+
+			<search position="after"><![CDATA[// Load membergroups.]]></search>
+
+<add><![CDATA[
+	// Default membergroups for the restricted groups list
+	$context['restricted_groups'] = array(
+		-1 => array(
+			'id' => '-1',
+			'name' => $txt['parent_guests_only'],
+			'checked' => in_array('-1', $curBoard['restricted_groups']),
+			'is_post_group' => false,
+		),
+		0 => array(
+			'id' => '0',
+			'name' => $txt['parent_members_only'],
+			'checked' => in_array('0', $curBoard['restricted_groups']),
+			'is_post_group' => false,
+		)
+	);
+]]></add>
+
+		</operation>
+		<operation>
+
+			<search position="before"><![CDATA['checked' => in_array($row['id_group'], $curBoard['member_groups']),
+			'is_post_group' => $row['min_posts'] != -1,
+		);]]></search>
+
+<add><![CDATA[
+		$context['restricted_groups'][(int) $row['id_group']] = array(
+			'id' => $row['id_group'],
+			'name' => trim($row['group_name']),
+			'checked' => in_array($row['id_group'], $curBoard['restricted_groups']),
+			'is_post_group' => $row['min_posts'] != -1,
+		);]]></add>
+
+		</operation>
+		<operation>
+
+			<search position="before"><![CDATA[$boardOptions['access_groups'] = array();]]></search>
+
+<add><![CDATA[
+		$boardOptions['restricted_groups'] = array();
+]]></add>
+
+		</operation>
+		<operation>
+
+			<search position="before"><![CDATA[if (!empty($_POST['groups']))
+			foreach ($_POST['groups'] as $group)
+				$boardOptions['access_groups'][] = (int) $group;]]></search>
+
+<add><![CDATA[
+		if (!empty($_POST['restricted_groups']))
+			foreach ($_POST['restricted_groups'] as $rgroup)
+				$boardOptions['restricted_groups'][] = (int) $rgroup;
+]]></add>
+
+		</operation>
+	</file>
+
+	<file name="$sourcedir/MessageIndex.php">
+		<operation>
+
+			<search position="before"><![CDATA[WHERE ' . ($pre_query ? 't.id_topic IN ({array_int:topic_list})' : 't.id_board = {int:current_board}') . (!$modSettings['postmod_active'] || $context['can_approve_posts'] ? '' : '
+				AND (t.approved = {int:is_approved}' . ($user_info['is_guest'] ? '' : ' OR t.id_member_started = {int:current_member}') . ')') . ']]></search>
+
+<add><![CDATA[
+				' . (is_user_restricted() ? 'AND mf.id_member = {int:current_member}' : '') . '
+]]></add>
+
+		</operation>
+		<operation>
+
+			<search position="before"><![CDATA[WHERE t.id_board = {int:current_board}' . (!$modSettings['postmod_active'] || $context['can_approve_posts'] ? '' : '
+				AND (t.approved = {int:is_approved}' . ($user_info['is_guest'] ? '' : ' OR t.id_member_started = {int:current_member}') . ')') . ']]></search>
+
+<add><![CDATA[
+				' . (is_user_restricted() ? 'AND mf.id_member = {int:current_member}' : '') . '
+]]></add>
+
+		</operation>
+	</file>
+
+	<file name="$sourcedir/Post.php">
+		<operation>
+
+			<search position="after"><![CDATA[// If this topic already has a poll, they sure can't add another.]]></search>
+
+<add><![CDATA[
+		if (is_user_restricted() && $id_member_poster != $user_info['id'])
+			fatal_lang_error('topic_gone', false);
+]]></add>
+
+		</operation>
+		<operation>
+
+			<search position="before"><![CDATA[// Did this topic suddenly move? Just checking...
+		if ($topic_info['id_board'] != $board)
+			fatal_lang_error('not_a_topic');]]></search>
+
+<add><![CDATA[
+		if (is_user_restricted() && $topic_info['id_member_started'] != $user_info['id'])
+			fatal_lang_error('topic_gone', false);
+]]></add>
+
+		</operation>
+	</file>
+
+	<file name="$sourcedir/Profile-Modify.php">
+		<operation>
+
+			<search position="before"><![CDATA[ml.id_msg_modified, ml.poster_time, ml.id_member AS id_member_updated,]]></search>
+
+<add><![CDATA[
+			b.restricted_groups,
+]]></add>
+
+		</operation>
+		<operation>
+
+			<search position="before"><![CDATA[LEFT JOIN {db_prefix}log_mark_read AS lmr ON (lmr.id_board = b.id_board AND lmr.id_member = {int:current_member})
+		WHERE ln.id_member = {int:selected_member}]]></search>
+
+<add><![CDATA[
+			AND ( (' . restricted_groups() . ') OR ms.id_member = {int:current_member} )
+]]></add>
+
+		</operation>
+	</file>
+
+	<file name="$sourcedir/Recent.php">
+		<operation>
+
+			<search position="before"><![CDATA[b.name AS bname, c.name AS cname, t.num_replies, m.id_member, m2.id_member AS id_first_member,]]></search>
+
+<add><![CDATA[
+			b.restricted_groups,
+]]></add>
+
+		</operation>
+		<operation>
+
+			<search position="before"><![CDATA[WHERE m.id_msg IN ({array_int:message_list})]]></search>
+
+<add><![CDATA[
+			AND ( (' . restricted_groups() . ') OR m2.id_member = {int:current_member} )
+]]></add>
+
+		</operation>
+		<operation>
+
+			<search position="before"><![CDATA[LIMIT ' . count($messages),
+		array(
+			'message_list' => $messages,]]></search>
+
+<add><![CDATA[
+			'current_member' => $user_info['id'],
+]]></add>
+
+		</operation>
+		<operation>
+
+			<search position="before"><![CDATA[ms.subject AS first_subject, ms.poster_time AS first_poster_time, ms.id_topic, t.id_board, b.name AS bname,]]></search>
+
+<add><![CDATA[
+				b.restricted_groups,
+]]></add>
+
+		</operation>
+		<operation>
+
+			<search position="before"><![CDATA[WHERE b.' . $query_this_board . ']]></search>
+
+<add><![CDATA[
+				AND ' . restricted_where() . '
+]]></add>
+
+		</operation>
+		<operation>
+
+			<search position="after"><![CDATA[WHERE t.' . $query_this_board . '
+				AND t.id_last_msg >= {int:min_message}
+				AND IFNULL(lt.id_msg, IFNULL(lmr.id_msg, 0)) < ml.id_msg' . ($modSettings['postmod_active'] ? ']]></search>
+
+<add><![CDATA[
+				AND ( (' . restricted_groups() . ') OR ms.id_member = {int:current_member} )
+]]></add>
+
+		</operation>
+	</file>
+
+	<file name="$sourcedir/Search.php">
+		<operation>
+
+			<search position="before"><![CDATA[m.id_msg, m.subject, m.poster_name, m.poster_email, m.poster_time, m.id_member,]]></search>
+
+<add><![CDATA[
+				b.restricted_groups,
+]]></add>
+
+		</operation>
+		<operation>
+
+			<search position="before"><![CDATA[WHERE m.id_msg IN ({array_int:message_list})' . ($modSettings['postmod_active'] ? '
+				AND m.approved = {int:is_approved}' : '') . ']]></search>
+
+<add><![CDATA[
+				AND ( (' . restricted_groups() . ') OR first_m.id_member = {int:current_member} )
+]]></add>
+
+		</operation>
+		<operation>
+
+			<search position="before"><![CDATA['message_list_in_set' => implode(',', $msg_list),
+				'limit' => count($context['topics']),]]></search>
+
+<add><![CDATA[
+				'current_member' => $user_info['id'],
+]]></add>
+
+		</operation>
+	</file>
+
+	<file name="$sourcedir/Stats.php">
+		<operation>
+
+			<search position="replace"><![CDATA[SELECT m.subject, t.num_replies, t.id_board, t.id_topic, b.name]]></search>
+
+<add><![CDATA[SELECT m.subject, t.num_replies, t.id_board, t.id_topic, b.name, b.restricted_groups
+]]></add>
+
+		</operation>
+		<operation>
+
+			<search position="before"><![CDATA[ORDER BY t.num_replies DESC
+		LIMIT 10',
+		array(]]></search>
+
+<add><![CDATA[
+			'current_member' => $user_info['id'],
+]]></add>
+
+		</operation>
+		<operation>
+
+			<search position="after"><![CDATA[ORDER BY t.num_replies DESC]]></search>
+
+<add><![CDATA[
+			AND ( (' . restricted_groups() . ') OR m.id_member = {int:current_member} )
+]]></add>
+
+		</operation>
+
+		<operation>
+
+			<search position="replace"><![CDATA[SELECT m.subject, t.num_views, t.id_board, t.id_topic, b.name]]></search>
+
+<add><![CDATA[SELECT m.subject, t.num_views, t.id_board, t.id_topic, b.name, b.restricted_groups
+]]></add>
+
+		</operation>
+		<operation>
+
+			<search position="before"><![CDATA[ORDER BY t.num_views DESC
+		LIMIT 10',
+		array(]]></search>
+
+<add><![CDATA[
+			'current_member' => $user_info['id'],
+]]></add>
+
+		</operation>
+		<operation>
+
+			<search position="after"><![CDATA[ORDER BY t.num_views DESC]]></search>
+
+<add><![CDATA[
+			AND ( (' . restricted_groups() . ') OR m.id_member = {int:current_member} )
+]]></add>
+
+		</operation>
+	</file>
+
+	<file name="$sourcedir/Subs-BoardIndex.php">
+		<operation>
+
+			<search position="before"><![CDATA[m.subject, m.id_topic, IFNULL(mem.real_name, m.poster_name) AS real_name,]]></search>
+
+<add><![CDATA[
+			b.restricted_groups,
+]]></add>
+
+		</operation>
+		<operation>
+
+			<search position="before"><![CDATA[$row_board['short_subject'] = shorten_subject($row_board['subject'], 24);]]></search>
+
+<add><![CDATA[
+		$row_board['restricted_groups'] = $row_board['restricted_groups'] == '' ? array() : explode(',', $row_board['restricted_groups']);
+]]></add>
+
+		</operation>
+		<operation>
+
+			<search position="after"><![CDATA[// Provide the href and link.]]></search>
+
+<add><![CDATA[
+		if (is_user_restricted($row_board['restricted_groups']) && $row_board['id_member'] != $user_info['id']) {
+			$this_last_post['member']['username'] = $txt['not_applicable'];
+			$this_last_post['member']['href'] = '';
+			$row_board['subject'] = '';
+			$this_last_post['member']['link'] = $txt['not_applicable'];
+		}
+]]></add>
+
+		</operation>
+	</file>
+
+	<file name="$sourcedir/Subs-Boards.php ">
+		<operation>
+
+			<search position="after"><![CDATA[// Who's allowed to access this board.]]></search>
+
+<add><![CDATA[
+	// Who can see only own topics in this board
+	{
+		$boardUpdates[] = 'restricted_groups = {string:restricted_groups}';
+		$boardUpdateParameters['restricted_groups'] = implode(',', $boardOptions['restricted_groups']);
+	}
+]]></add>
+
+		</operation>
+		<operation>
+
+			<search position="replace"><![CDATA[b.num_posts, b.num_topics, c.id_cat, c.name AS cat_name, c.cat_order, c.can_collapse]]></search>
+
+<add><![CDATA[b.num_posts, b.num_topics, c.id_cat, c.name AS cat_name, c.cat_order, c.can_collapse, b.restricted_groups
+]]></add>
+
+		</operation>
+		<operation>
+
+			<search position="before"><![CDATA['member_groups' => explode(',', $row['member_groups']),]]></search>
+
+<add><![CDATA[
+				'restricted_groups' => explode(',', $row['restricted_groups']),
+]]></add>
+
+		</operation>
+	</file>
+
+	<file name="$sourcedir/Who.php">
+		<operation>
+
+			<search position="replace"><![CDATA[SELECT t.id_topic, m.subject]]></search>
+
+<add><![CDATA[SELECT t.id_topic, m.subject, b.restricted_groups
+]]></add>
+
+		</operation>
+		<operation>
+
+			<search position="before"><![CDATA[AND t.id_topic IN ({array_int:topic_list})' . ($modSettings['postmod_active'] ? '
+				AND t.approved = {int:is_approved}' : '') . ']]></search>
+
+<add><![CDATA[
+				AND ( (' . restricted_groups() . ') OR m.id_member = {int:current_member} )
+]]></add>
+
+		</operation>
+		<operation>
+
+			<search position="before"><![CDATA['is_approved' => 1,
+				'limit' => count($topic_ids),]]></search>
+
+<add><![CDATA[
+				'current_member' => $user_info['id'],
+]]></add>
+
+		</operation>
+	</file>
+
+	<file name="$themedir/ManageBoards.template.php">
+		<operation>
+
+			<search position="after"><![CDATA[// Options to choose moderators, specifiy as announcement board and choose whether to count posts here.]]></search>
+
+<add><![CDATA[
+	// List all the membergroups so the user can choose who are restricted to see only own topics
+	echo '
+						<dt>
+							<strong>', $txt['mboards_restricted_groups'], ':</strong><br />
+							<span class="smalltext">', $txt['mboards_restricted_groups_desc'], '</span>
+						</dt>
+						<dd>';
+	foreach ($context['restricted_groups'] as $group)
+		echo '
+							<label for="restricted_groups_', $group['id'], '">
+								<input type="checkbox" name="restricted_groups[]" value="', $group['id'], '" id="restricted_groups_', $group['id'], '"', $group['checked'] ? ' checked="checked"' : '', ' class="input_check" />
+								<span', $group['is_post_group'] ? ' class="post_group" title="' . $txt['mboards_groups_post_group'] . '"' : '', $group['id'] == 0 ? ' class="regular_members" title="' . $txt['mboards_groups_regular_members'] . '"' : '', '>
+									', $group['name'], '
+								</span>
+							</label><br />';
+	echo '
+							<em>', $txt['check_all'], '</em> <input type="checkbox" class="input_check" onclick="invertAll(this, this.form, \'restricted_groups[]\');" /><br />
+							<br />
+						</dd>';
+]]></add>
+
+		</operation>
+	</file>
+</modification>

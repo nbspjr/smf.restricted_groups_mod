@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<!DOCTYPE modification SYSTEM "http://www.simplemachines.org/xml/modification">
+<modification xmlns="http://www.simplemachines.org/xml/modification" xmlns:smf="http://www.simplemachines.org/">
+	<id>SergeyDanilishin:RestrictedGroupsMod</id>
+	<version>0.0.9</version>
+	
+	<file name="$themedir/languages/ManageBoards.english.php" error="skip">
+		<operation>
+
+			<search position="end"></search>
+
+			<add><![CDATA[
+// Restricted Groups Mod
+$txt['mboards_restricted_groups'] = 'Restricted Groups';
+$txt['mboards_restricted_groups_desc'] = 'Groups that are allowed to access only topics created by them within this board.<br /><em>Note: Restricted groups are <strong>not</strong> automatically allowed to access the board. You should add them into Allowed Groups list too.</em><br />';
+			]]></add>
+
+		</operation>
+	</file>
+</modification>
