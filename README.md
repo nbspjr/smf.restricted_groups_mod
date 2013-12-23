@@ -13,5 +13,5 @@ Just edit a board of your choice and select groups you wish to limit to see only
 Notes
 =====
 
-Should work with SMF2.0+, but the current package-info.xml includes only 2.0.4 version.
+Tested only with 2.0.4 - 2.0.6, but should work with SMF 2.0+.
 
