@@ -423,6 +423,15 @@ function restricted_groups() {
 			]]></add>
 
 		</operation>
+		
+		<operation>
+			
+		<search position="replace"><![CDATA[if (!empty($boardIndexOptions['set_latest_post']) && !empty($row_board['poster_time']) && $row_board['poster_time'] > $latest_post['timestamp'] && !$ignoreThisBoard)]]></search>
+
+<add><![CDATA[if (!empty($boardIndexOptions['set_latest_post']) && !empty($row_board['poster_time']) && $row_board['poster_time'] > $latest_post['timestamp'] && !$ignoreThisBoard &&
+		(!is_user_restricted($row_board['restricted_groups']) || $row_board['id_member'] == $user_info['id']) )]]></add>
+
+		</operation>
 	</file>
 
 	<file name="$sourcedir/Subs-Boards.php ">
