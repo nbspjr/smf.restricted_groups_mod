@@ -5,6 +5,7 @@
 		<name>Restricted Groups Mod</name>
 		<version>0.0.9</version>
 		<type>modification</type>
+
 	<install for="2.0.4">
 		<readme type="inline">Restricted Groups Mod allows to limit certain groups to see only topics started by them. Don't forget to BACKUP, please.</readme>
 		<code>db_change_2.0.php</code>
@@ -14,6 +15,7 @@
 		<modification type="file" format="xml">language_english_utf8.xml</modification>
 		<modification type="file" format="xml">language_english.xml</modification>
 	</install>
+
 	<uninstall for="2.0.4">
 		<readme type="inline">Thank you for using Restricted Groups Mod. Removing the mod will not delete it's settings from the database.</readme>
 		<modification reverse="true">install.xml</modification>
@@ -22,4 +24,5 @@
 		<modification reverse="true">language_english_utf8.xml</modification>
 		<modification reverse="true">language_english.xml</modification>
 	</uninstall>
+
 </package-info>

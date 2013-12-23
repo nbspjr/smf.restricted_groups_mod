@@ -18,5 +18,4 @@ if ($smcFunc['db_fetch_assoc']($result) == 0)
 			ALTER TABLE {db_prefix}boards
 				ADD `restricted_groups` varchar(255) NOT NULL DEFAULT '' AFTER `redirect`
 		");
-
 ?>
