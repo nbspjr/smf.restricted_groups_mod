@@ -279,7 +279,7 @@ function restricted_groups() {
 			<search position="before"><![CDATA[WHERE b.' . $query_this_board . ']]></search>
 
 <add><![CDATA[
-				AND ( (' . restricted_groups() . ') OR ml.id_member = {int:current_member} )
+				AND ( (' . restricted_groups() . ') OR ms.id_member = {int:current_member} )
 ]]></add>
 
 		</operation>
@@ -289,7 +289,7 @@ function restricted_groups() {
 				AND t.id_last_msg >= {int:min_message}]]></search>
 
 <add><![CDATA[
-				AND ( (' . restricted_groups() . ') OR ml.id_member = {int:current_member} )]]></add>
+				AND ( (' . restricted_groups() . ') OR ms.id_member = {int:current_member} )]]></add>
 
 		</operation>
 	</file>
