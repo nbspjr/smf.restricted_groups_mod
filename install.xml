@@ -279,19 +279,17 @@ function restricted_groups() {
 			<search position="before"><![CDATA[WHERE b.' . $query_this_board . ']]></search>
 
 <add><![CDATA[
-				AND ' . restricted_where() . '
+				AND ( (' . restricted_groups() . ') OR ml.id_member = {int:current_member} )
 ]]></add>
 
 		</operation>
 		<operation>
 
-			<search position="after"><![CDATA[WHERE t.' . $query_this_board . '
-				AND t.id_last_msg >= {int:min_message}
-				AND IFNULL(lt.id_msg, IFNULL(lmr.id_msg, 0)) < ml.id_msg' . ($modSettings['postmod_active'] ? ']]></search>
+			<search position="before"><![CDATA[WHERE t.' . $query_this_board . '
+				AND t.id_last_msg >= {int:min_message}]]></search>
 
 <add><![CDATA[
-				AND ( (' . restricted_groups() . ') OR ms.id_member = {int:current_member} )
-]]></add>
+				AND ( (' . restricted_groups() . ') OR ml.id_member = {int:current_member} )]]></add>
 
 		</operation>
 	</file>
