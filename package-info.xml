@@ -3,7 +3,7 @@
 <package-info xmlns="http://www.simplemachines.org/xml/package-info" xmlns:smf="http://www.simplemachines.org/">
 	<id>SergeyDanilishin:RestrictedGroupsMod</id>
 		<name>Restricted Groups Mod</name>
-		<version>0.0.9</version>
+		<version>0.0.10</version>
 		<type>modification</type>
 
 	<install for="2.0.4-2.0.6">

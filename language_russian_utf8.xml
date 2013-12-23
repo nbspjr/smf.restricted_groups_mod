@@ -2,7 +2,7 @@
 <!DOCTYPE modification SYSTEM "http://www.simplemachines.org/xml/modification">
 <modification xmlns="http://www.simplemachines.org/xml/modification" xmlns:smf="http://www.simplemachines.org/">
 	<id>SergeyDanilishin:RestrictedGroupsMod</id>
-	<version>0.0.9</version>
+	<version>0.0.10</version>
 	
 	<file name="$themedir/languages/ManageBoards.russian-utf8.php" error="skip">
 		<operation>
